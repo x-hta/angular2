@@ -193,6 +193,8 @@ export class StrategyComponent {
     ];
     show:boolean = false;
 
+    underlyingSymbol:Symbol;
+
     @ViewChild('strategyBox') window: ElementRef;
 
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService) {
@@ -229,57 +231,58 @@ export class StrategyComponent {
      * @private
      */
     private getData(key : string, underlyingSymbol : string) : Promise<StrategyOrderInfo>{
-        var self = this;
+        let self = this;
         return this.symbolService.getOptions(underlyingSymbol).then(function (options) {
+            let sym = self.symbolService.getSymbol(underlyingSymbol);
             switch (key) {
                 case STRATEGY_MAP.longStrangle:
-                    return self.tradeService.longStrangle(options, underlyingSymbol);
+                    return self.tradeService.longStrangle(options, sym);
                 case STRATEGY_MAP.shortStrangle:
-                    return self.tradeService.shortStrangle(options, underlyingSymbol);
+                    return self.tradeService.shortStrangle(options, sym);
                 case STRATEGY_MAP.condor:
-                    return self.tradeService.condor(options, underlyingSymbol);
+                    return self.tradeService.condor(options, sym);
                 case STRATEGY_MAP.ironCondor:
-                    return self.tradeService.ironCondor(options, underlyingSymbol);
+                    return self.tradeService.ironCondor(options, sym);
                 case STRATEGY_MAP.reverseIronCondor:
-                    return self.tradeService.reverseIronCondor(options, underlyingSymbol);
+                    return self.tradeService.reverseIronCondor(options, sym);
                 case STRATEGY_MAP.shortCondor:
-                    return self.tradeService.shortCondor(options, underlyingSymbol);
+                    return self.tradeService.shortCondor(options, sym);
                 case STRATEGY_MAP.butterflySpread:
-                    return self.tradeService.butterflySpread(options, underlyingSymbol);
+                    return self.tradeService.butterflySpread(options, sym);
                 case STRATEGY_MAP.ironButterfly:
-                    return self.tradeService.ironButterfly(options, underlyingSymbol);
+                    return self.tradeService.ironButterfly(options, sym);
                 case STRATEGY_MAP.longPutButterfly:
-                    return self.tradeService.longPutButterfly(options, underlyingSymbol);
+                    return self.tradeService.longPutButterfly(options, sym);
                 case STRATEGY_MAP.shortPutButterfly:
-                    return self.tradeService.shortPutButterfly(options, underlyingSymbol);
+                    return self.tradeService.shortPutButterfly(options, sym);
                 case STRATEGY_MAP.shortButterfly:
-                    return self.tradeService.shortButterfly(options, underlyingSymbol);
+                    return self.tradeService.shortButterfly(options, sym);
                 case STRATEGY_MAP.reverseIronButterfly:
-                    return self.tradeService.reverseIronButterfly(options, underlyingSymbol);
+                    return self.tradeService.reverseIronButterfly(options, sym);
                 case STRATEGY_MAP.ratioSpread:
-                    return self.tradeService.ratioSpread(options, underlyingSymbol);
+                    return self.tradeService.ratioSpread(options, sym);
                 case STRATEGY_MAP.putRatioSpread:
-                    return self.tradeService.putRatioSpread(options, underlyingSymbol);
+                    return self.tradeService.putRatioSpread(options, sym);
                 case STRATEGY_MAP.ratioPutWrite:
-                    return self.tradeService.ratioPutWrite(options, underlyingSymbol);
+                    return self.tradeService.ratioPutWrite(options, sym);
                 case STRATEGY_MAP.ratioCallWrite:
-                    return self.tradeService.ratioCallWrite(options, underlyingSymbol);
+                    return self.tradeService.ratioCallWrite(options, sym);
                 case STRATEGY_MAP.variableRatioWrite:
-                    return self.tradeService.variableRatioWrite(options, underlyingSymbol);
+                    return self.tradeService.variableRatioWrite(options, sym);
                 case STRATEGY_MAP.shortStraddle:
-                    return self.tradeService.shortStraddle(options, underlyingSymbol);
+                    return self.tradeService.shortStraddle(options, sym);
                 case STRATEGY_MAP.longGuts:
-                    return self.tradeService.longGuts(options, underlyingSymbol);
+                    return self.tradeService.longGuts(options, sym);
                 case STRATEGY_MAP.shortGuts:
-                    return self.tradeService.shortGuts(options, underlyingSymbol);
+                    return self.tradeService.shortGuts(options, sym);
                 case STRATEGY_MAP.longCallLadder:
-                    return self.tradeService.longCallLadder(options, underlyingSymbol);
+                    return self.tradeService.longCallLadder(options, sym);
                 case STRATEGY_MAP.shortCallLadder:
-                    return v.tradeService.shortCallLadder(options, underlyingSymbol);
+                    return self.tradeService.shortCallLadder(options, sym);
                 case STRATEGY_MAP.longPutLadder:
-                    return self.tradeService.longPutLadder(options, underlyingSymbol);
+                    return self.tradeService.longPutLadder(options, sym);
                 default:
-                    return self.tradeService.shortPutLadder(options, underlyingSymbol);
+                    return self.tradeService.shortPutLadder(options, sym);
             }
         });
     }

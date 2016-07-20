@@ -78,4 +78,14 @@ export class OptionSymbolService {
         });
     }
 
+    getSymbol(symbol : string) : Symbol{
+        return <Symbol>{
+            uid: symbol,
+            name: symbol,
+            underlyingSymbol: symbol,
+            expiryDate: '',
+            strikePrice: 0
+        }
+    }
+
 }
