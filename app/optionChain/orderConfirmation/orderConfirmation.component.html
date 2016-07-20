@@ -1,0 +1,82 @@
+<div class="OC-RECEIPT">
+    <div class=" WIDTH50 FLOAT-L SCROLL540">
+        <h1>Confirm - <span class="TX-RED">1 SPY Custom</span> </h1>
+        <div class="DESC">
+
+            <h2>Details</h2>
+            <div ng-repeat="ord in selOrders" ng-if="ord.length > 0">
+                <div ng-repeat="sym in ord" class="OC-PILL-WRAPPER">
+                    <div class="OC-PILL WIDTH33 FLOAT-L">
+                        <ul ng-class="{'OC-PILL-RED' : (sym.side == 'sell'), 'OC-PILL-GREEN' : (sym.side == 'buy')}"> <li class="active">{{(sym.side == 'sell') ? 'Sell' : 'Buy'}}</li>  <li>Open</li> </ul>
+                    </div>
+                    <div class="FLOAT-L"><span ng-if="(sym.side == 'sell')">-</span><span class="PADDING3">{{sym.quantity}} </span></div>
+                    <div class="OC-PILL WIDTH33 FLOAT-L">
+                        <ul class="OC-PILL-NOR">
+                            <li class="active">{{sym.symbol.name}}</li>  <li>3d</li>
+                        </ul>
+                    </div>
+
+                    <div class="OC-PILL WIDTH33 FLOAT-L">
+                        <ul class="OC-PILL-NOR"> <li class="active">{{sym.symbol.strikePrice|number}}</li>  <li>{{sym.type}}</li> </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="DESC">
+            <h2>Type  </h2>
+            <p>{{orderConfirm.orderType}} @ {{orderConfirm.orderInfo.absPrice | number: 2}}</p>
+        </div>
+
+        <div class="DESC">
+            <h2>Est. Cost  </h2>
+            <p>${{orderConfirm.orderInfo.absPrice * 100 | number: 2}} {{(orderConfirm.orderInfo.price > 0) ? 'Credit' : 'Debit'}} + Transaction Costs</p>
+        </div>
+
+        <div class="DESC">
+            <h2>Time-In-Force  </h2>
+            <p>{{orderConfirm.tifType}} </p>
+        </div>
+
+        <div class="DESC">
+            <h2>THETA  </h2>
+            <p> -7.164</p>
+        </div>
+
+        <div class="DESC">
+            <h2>Buying Power </h2>
+            <p>Reduced by ${{orderConfirm.orderInfo.price * 100 | number: 2}} (estimated)</p>
+        </div>
+
+        <div class="DESC">
+            <h2>EST. COMM. FEE </h2>
+            <p>$4.50 (+ Transaction Cost)</p>
+        </div>
+
+
+    </div>
+    <div class=" WIDTH25 FLOAT-L color3 PADDING5 SCROLL540">
+        <h4>Max P/L</h4>
+        <div class="DESC">
+            <h2> <span class="TX-GREEN icon ico-up"></span> Buying Power </h2>
+            <p>If the price of SPY winds up being greater than 226.44, your maximum possible profit is Undefined</p>
+        </div>
+
+        <div class="DESC">
+            <h2> <span class="TX-RED icon ico-down"></span>  Buying Power </h2>
+            <p>If the price of SPY winds up being less than 226.44, your maximum possible loss is $2,333.00</p>
+        </div>
+    </div>
+    <div class=" WIDTH25 FLOAT-L SCROLL540">
+
+        <div class="DESC">
+            <h2>  SPY Working Orders </h2>
+            <p>You have no working orders for SPY</p>
+        </div>
+
+        <div class="DESC">
+            <h2>  SPY Positions </h2>
+            <p>You have no working orders for SPY</p>
+        </div>
+    </div>
+</div>

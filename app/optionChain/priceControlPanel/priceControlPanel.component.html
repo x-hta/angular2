@@ -1,0 +1,54 @@
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr>
+        <th>Choose One</th>
+        <th>Singles (drag to place)</th>
+        <th>You Are Here</th>
+        <th>Expirations</th>
+    </tr>
+    <tr>
+        <td option-chain-strategy [symbol]="symbol">Strategy</td>
+        <td option-chain-mode-control></td>
+        <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                <tr>
+                    <td rowspan="2" class="GREEN-BOX" style="width: 50px;text-align: center !important;">
+                        <span>tooltip.side</span>
+                    </td>
+                    <!--<td rowspan="2" ng-show="tooltip.side === 'SELL'" class="RED-BOX" style="width: 50px;text-align: center !important;">-->
+                    <!--<span>{{tooltip.side}}</span>-->
+                    <!--</td>-->
+                    <th>Expiration</th>
+                    <th>Strike</th>
+                    <th>Side</th>
+                    <th>Volume</th>
+                    <th>Open Int</th>
+                    <th>Liquidity</th>
+                    <th>POP</th>
+                </tr>
+                <tr>
+                    <td>tooltip.exp</td>
+                    <td>tooltip.stk</td>
+                    <td>tooltip.type</td>
+                    <td>tooltip.volume</td>
+                    <td>tooltip.open</td>
+                    <td>tooltip.liq <span class="icon ico-tint"></span></td>
+                    <td>tooltip.pop</td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                <tr>
+                    <td>Time<br>-</td>
+                    <td>Time<br>+</td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+    </tr>
+    </tbody>
+</table>

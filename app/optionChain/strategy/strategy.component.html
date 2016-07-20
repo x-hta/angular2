@@ -1,0 +1,48 @@
+<span class="XBig-Button PADDING8" (click)="showStrategies()">Strategies</span>
+<div class="OC-TABLE-W">
+    <div class="OC-SIDEMENU-LEFT" #strategyBox *ngIf="show === true">
+        <div class="OC-W320">
+            <div class="OC-SIDEMENU-LEFT-header">
+                <ul>
+                    <li>
+                        <div>Choose Strategy</div>
+                        <div>POP</div>
+                        <div>BR</div>
+                    </li>
+                </ul>
+            </div>
+            <div class="OC-W320-body">
+                <ul>
+                    <li *ngFor="let strategy of strategies">
+                        <div>{{strategy.name}}<br><span class="TX-RED">{{strategy.sub[strategy.def].name}}</span></div>
+                        <div><span class="icon ico-like"></span></div>
+                        <div><input type="button" value="Go" class="OC-GO" (click)="setStrategy(strategy.sub[strategy.def].key)"></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="OC-W280">
+            <div class="OC-SIDEMENU-LEFT-header">
+                <ul>
+                    <li>
+                        <div>All Plays</div>
+                        <div>Default</div>
+                        <div></div>
+                    </li>
+                </ul>
+            </div>
+            <div class="OC-W320-body">
+                <ul>
+                    <li *ngFor="let k of subData">
+                        <div>
+                            <span class="TX-RED">{{k.name}}</span>
+                        </div>
+                        <div><span class="icon ico-star"></span></div>
+                        <div><input type="button" value="Go" class="OC-GO" (click)="setStrategy(k.key)"></div>
+                    </li>
+                    <!--<img src="images/oc.png" width="100%" alt=""/><br>-->
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

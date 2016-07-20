@@ -1,0 +1,61 @@
+<div class="OC-TABLE-W">
+    <div class="OC-SIDEMENU-RIGHT">
+        <div class="OC-W320">
+            <div class="OC-SIDEMENU-LEFT-header">
+                <ul>
+                    <li>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8">Edit Option</div>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8" ng-click="updateOrder(activeOrder.id, activeOrder.underlyingSymbol)">Done</div>
+                    </li>
+                </ul>
+            </div>
+            <div class="OC-W320-body">
+                <ul>
+                    <li>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8">BID: {{priceData.bestBid}}</div>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8">ASK: {{priceData.bestAsk}}</div>
+                    </li>
+                    <li>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8">Change: {{priceData.change}}</div>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8">Theta: {{priceData.theta}}</div>
+                    </li>
+                    <li>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8">Delta: {{priceData.delta}}</div>
+                        <div class="WIDTH50 ALIGN-LEFT PADDING8">Vega: {{priceData.vega}}</div>
+                    </li>
+                </ul>
+                <form>
+                    <div class="FLOAT-L">
+                        <div class="FLOAT-L padding5 WIDTH50">
+                            <span>Action</span> <br>
+                            <select class="OC-F-input WIDTH100" ng-options="side.key as side.label for side in sides" ng-model="activeOrder.side">
+                            </select>
+                        </div>
+                        <div class="FLOAT-L padding5 WIDTH50">
+                            <span>Contacts</span> <br>
+                            <span>
+                                <input class="OC-F-input" type="button" value="+" ng-click="incrementQuantity()"/>
+                                <span>{{activeOrder.quantity}}</span>
+                                <input class="OC-F-input" type="button" value="-" ng-click="decrementQuantity()" ng-disabled='activeOrder.quantity === 1'/>
+                            </span>
+                        </div>
+                        <div class="FLOAT-L padding5 WIDTH50">
+                            <span>Expiration </span> <br>
+                            <select class="OC-F-input" name="expDatePicker" ng-options="expiry.expiryDate as expiry.name for expiry in expiryDates" ng-model="activeOrder.expiry"></select>
+                        </div>
+                        <div class="FLOAT-L padding5 WIDTH50">
+                            <span>Strike</span> <br>
+                            <select class="OC-F-input" ng-options="strike as strike for strike in strikePrices track by strike" ng-model="activeOrder.strikePrice"></select>
+                        </div>
+                        <div class="FLOAT-L padding5 WIDTH50">
+                            <span>Type</span> <br>
+                            <select class="OC-F-input" class="OC-F-input WIDTH100" ng-options="type.key as type.label for type in types" ng-model="activeOrder.type">
+                            </select>
+                        </div>
+                    </div>
+                    <input type="button" class="OC-GO OC-GO-L WIDTH50" value="Delete Leg" ng-click="deleteOrder(activeOrder.id, activeOrder.underlyingSymbol)">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

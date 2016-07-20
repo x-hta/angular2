@@ -1,0 +1,116 @@
+<div class="OC-F-M"><span class="OC-F-M-T">122d</span>
+
+    <div class="FLOAT-L padding5">
+        <span class="ALIGN-LEFT">POP</span><br>
+        <span class="FONT18 BOLD">{{orderInfo.pop | number: 2}}%</span></div>
+    <div class="FLOAT-R padding5">
+        <span class="ALIGN-RIGHT FLOAT-R">PRICE</span><br>
+        <span class=" FONT18 BOLD">${{orderInfo.absPrice | number: 2}} <span ng-if="(orderInfo.price > 0)">cr</span><span ng-if="(orderInfo.price < 0)">db</span></span></div>
+    <span class="OC-F-M-ico icon " ng-class="{'ico-chevron-up-circle': !showOrdInf, 'ico-x' : showOrdInf}" ng-click="showOrderInfo()"></span>
+    <div ng-show="showOrdInf" class="OC-TABLE-W">
+        <div class="OC-MID-POPUP ">
+            <div class="col-sm-12 FLOAT-L PADDING5 SCROLL325">Option
+                <div ng-repeat="ord in selOrders">
+                    <div ng-repeat="sym in ord" class="OC-PILL-WRAPPER">
+                        <div class="OC-PILL WIDTH33 FLOAT-L">
+                            <ul ng-class="{'OC-PILL-RED' : (sym.side == 'sell'), 'OC-PILL-GREEN' : (sym.side == 'buy')}"> <li class="active">{{(sym.side == 'sell') ? 'Sell' : 'Buy'}}</li>  <li>Open</li> </ul>
+                        </div>
+                        <div class="FLOAT-L"><span ng-if="(sym.side == 'sell')">-</span><span class="PADDING3">{{sym.quantity}} </span></div>
+                        <div class="OC-PILL WIDTH33 FLOAT-L">
+                            <ul class="OC-PILL-NOR">
+                                <li class="active">{{sym.symbol.name}}</li>  <li>3d</li>
+                            </ul>
+                        </div>
+
+                        <div class="OC-PILL WIDTH33 FLOAT-L">
+                            <ul class="OC-PILL-NOR"> <li class="active">{{sym.symbol.strikePrice|number}}</li>  <li>{{sym.type}}</li> </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="clearfix"></div>
+                <div class="DESC">
+                    <h2>Max Prof <span class=" TX-GREEN icon ico-up"></span></h2>
+                    <h3>Undefined</h3>
+                    <p>If the price of SPY winds up being greater than 215.51, your maximum possible profit is Undefined</p>
+                </div>
+
+                <div class="DESC">
+                    <h2>Max Prof <span class=" TX-RED icon ico-down"></span></h2>
+                    <h3>Undefined</h3>
+                    <p>If the price of SPY winds up being greater than 215.51, your maximum possible profit is Undefined</p>
+                </div>
+            </div>
+            <div class="col-sm-12 FLOAT-L color3 SND-01"> <ul>
+                <!--li>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">POP (%)</div>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8"><span class="FONT18"> ‹ 13 </span></div></li>
+
+                <li>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">TROC (%)</div>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">0.001 </div></li-->
+
+                <li>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8"> Extrinsic</div>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">{{orderInfo.extrinsic | number: 2}}</div></li>
+
+                <li>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8"> IV Rank (%)</div>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">{{orderInfo.ivRank}}</div></li>
+
+                <li>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">Theta</div>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">{{orderInfo.theta}} </div></li>
+
+                <li>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8"> Delta</div>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">{{orderInfo.delta}}</div></li>
+
+                <li>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8"> Price ($)</div>
+                    <div class="WIDTH50 ALIGN-LEFT PADDING8">{{orderInfo.absPrice | number: 2}} <span ng-if="(orderInfo.price > 0)">Credit</span><span ng-if="(orderInfo.price < 0)">Debit</span></div></li>
+            </ul>
+                <div class="OC-RANGE-WRAPPER PADDING5">
+
+
+                    <div class="OC-RANGE">
+
+                        <span class="OC-RANGE-l1">1</span>
+
+                        <span class="OC-RANGE-l2">2.34</span>
+
+                        <span class="OC-RANGE-m1">Mid</span>
+
+                        <span class="OC-RANGE-m2">2.13</span>
+
+                        <span class="OC-RANGE-r1">Nat</span>
+
+                        <span class="OC-RANGE-r2">112.4</span>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="OC-F-M2">
+    <div class="FLOAT-L padding5">
+        <span class="ALIGN-LEFT">TROC</span><br>
+        <span class="FONT18 BOLD">{{orderInfo.troc | number: 2}}%</span></div>
+    <div class="FLOAT-R padding5">
+        <span class="ALIGN-RIGHT FLOAT-R">EXT</span><br>
+        <span class=" FONT18  BOLD">{{orderInfo.extrinsic|number}}</span></div>
+</div>
+<div class="OC-F-M3">
+    <div class="OC-RANGE-WRAPPER">
+        <div class="OC-RANGE">
+            <span class="OC-RANGE-l1">1</span>
+            <span class="OC-RANGE-l2">2.34</span>
+            <span class="OC-RANGE-m1">Mid</span>
+            <span class="OC-RANGE-m2">2.13</span>
+            <span class="OC-RANGE-r1">Nat</span>
+            <span class="OC-RANGE-r2">112.4</span>
+        </div>
+    </div>
+</div>

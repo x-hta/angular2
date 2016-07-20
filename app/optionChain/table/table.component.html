@@ -1,0 +1,75 @@
+<div class="OC-TABLE-W" style="height: 263px;">
+    <div class="OC-TABLE-L1 flip" #buyDate>
+        <div class="OC-L1-TABLE">
+            <div class="OC-L1-TR" *ngFor="let expiry of expiryDates">
+                <div class="OC-L1-TD flip">{{expiry.name}}</div>
+            </div>
+        </div>
+    </div>
+    <div class="OC-TABLE-M1 flip" #buyData>
+        <div class="OC-TABLE">
+            <div class="OC-TR" *ngFor="let expiry of expiryDates">
+                <div class="OC-TD flip" *ngFor="let strikePrice of strikePrices">
+                    <div *ngIf="orderMap[expiry.expiryDate] && orderMap[expiry.expiryDate][strikePrice] && mode === 'w'">
+                        <div *ngFor="let order of orderMap[expiry.expiryDate][strikePrice]['buy']">
+                            <p>{{order}}</p>
+                        </div>
+                    </div>
+                    {{getPrice(expiry.expiryDate, strikePrice, 'buy')}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="OC-TABLE-R1 flip" #buyDatePercentage>
+        <div class="OC-L1-TABLE">
+            <div class="OC-L1-TR" *ngFor="let expiry of expiryDates">
+                <div class="OC-L1-TD flip">{{expiry.daysToExpire}}d</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="clearfix"></div>
+<div class="OC-X">
+    <div class="OC-X-L1"><span class="icon ico-angle-double-left" (click)="scrollLeft()"></span></div>
+    <div class="OC-X-M1" #midPrice>
+        <div class="OC-TABLE-X1">
+            <div class="OC-TABLE">
+                <div class="OC-X1-TR">
+                    <div *ngFor="let strikePrice of strikePrices" class="OC-TD">{{strikePrice}}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="OC-X-R1"><span class="icon ico-angle-double-right" (click)="scrollRight()"></span></div>
+</div>
+<div class="clearfix"></div>
+<div><!-- class="OC-TABLE-W"-->
+    <div class="OC-TABLE-L1" #sellDate>
+        <div class="OC-L1-TABLE">
+            <div class="OC-L1-TR" *ngFor="let expiry of expiryDates">
+                <div class="OC-L1-TD">{{expiry.name}}</div>
+            </div>
+        </div>
+    </div>
+    <div class="OC-TABLE-M1" #sellData>
+        <div class="OC-TABLE">
+            <div class="OC-TR" *ngFor="let expiry of expiryDates">
+                <div class="OC-TD" style="position: relative" *ngFor="let strikePrice of strikePrices">
+                    <div *ngIf="orderMap[expiry.expiryDate] && orderMap[expiry.expiryDate][strikePrice] && mode === 'w'">
+                        <div *ngFor="let order of orderMap[expiry.expiryDate][strikePrice]['sell']">
+                            <p>{{order}}</p>
+                        </div>
+                    </div>
+                    {{getPrice(expiry.expiryDate, strikePrice, 'sell')}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="OC-TABLE-R1" #sellDatePercentage>
+        <div class="OC-L1-TABLE">
+            <div class="OC-L1-TR" *ngFor="let expiry of expiryDates">
+                <div class="OC-L1-TD">{{expiry.daysToExpire}}d</div>
+            </div>
+        </div>
+    </div>
+</div>

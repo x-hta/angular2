@@ -1,0 +1,76 @@
+<table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tbody>
+    <tr>
+        <th>Choose One</th>
+        <th>Singles (drag to place)</th>
+        <th>Strikes</th>
+        <th>Width</th>
+        <th>Quantity</th>
+        <th>Expirations</th>
+        <th>Swap</th>
+        <th>Undo/Redo</th>
+        <th>Clear</th>
+    </tr>
+    <tr>
+        <td option-chain-strategy [symbol]="symbol">Strategy</td>
+        <td option-chain-mode-control></td>
+        <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                <tr>
+                    <td><span class="icon ico-angle-double-left big-icon" (click)="decreaseStrikePrice()"></span></td>
+                    <td><span class="icon ico-angle-double-right big-icon" (click)="increaseStrikePrice()"></span></td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                <tr>
+                    <td><span class="icon ico-minus-1 big-icon"></span></td>
+                    <td><span class="icon ico-plus-2 big-icon"></span></td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                <tr>
+                    <td><span class="icon ico-down-open big-icon" (click)="decreaseQuantity()"></span></td>
+                    <td><span class="icon ico-up-open big-icon" (click)="increaseQuantity()"></span></td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                <tr>
+                    <td (click)="decreaseExpDate()">Time<br>-</td>
+                    <td (click)="increaseExpDate()">Time<br>+</td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+            <span class="icon ico-random big-icon" (click)="swap()"></span>
+        </td>
+        <td>
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody>
+                <tr>
+                    <td><span class="icon ico-reply-mail big-icon"></span></td>
+                    <td><span class="icon ico-forward-1 big-icon"></span></td>
+                </tr>
+                </tbody>
+            </table>
+        </td>
+        <td>
+            <span class="icon ico-earser big-icon" (click)="deleteAll()"></span>
+        </td>
+    </tr>
+    </tbody>
+</table>

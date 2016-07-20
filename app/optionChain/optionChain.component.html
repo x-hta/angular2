@@ -1,0 +1,11 @@
+<div option-chain-header></div>
+
+<div class="OC-WRAPPER">
+    <div class="OC-HEADER" option-chain-order-control-panel [symbol]="symbol" *ngIf="mode !== 'w'"></div>
+    <div class="OC-HEADER" option-chain-price-control-panel [symbol]="symbol" *ngIf="mode === 'w'"></div>
+    <div option-chain-table [symbol]="symbol" [mode]="'w'" [orderType]="'c'"></div>
+</div>
+
+<div class="clearfix"></div>
+
+<div option-chain-footer></div>
