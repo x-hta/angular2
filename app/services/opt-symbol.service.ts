@@ -89,4 +89,20 @@ export class OptionSymbolService {
         }
     }
 
+    getNextOptionSymbolByStrikePrice(symbol : OptionSymbol) : OptionSymbol{
+        return symbol;
+    }
+
+    getPreviousOptionSymbolByStrikePrice(symbol : OptionSymbol) : OptionSymbol{
+        return symbol;
+    }
+
+    getNextOptionSymbolByExpiry(symbol : OptionSymbol) : OptionSymbol{
+        return symbol;
+    }
+
+    getPreviousOptionSymbolByExpiry(symbol : OptionSymbol) : OptionSymbol{
+        return symbol;
+    }
+
 }

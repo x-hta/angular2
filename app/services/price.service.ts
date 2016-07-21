@@ -1,5 +1,8 @@
 import { Injectable }    from '@angular/core';
 
+import {Symbol} from './../beans/symbol';
+import {Snapshot} from './../beans/snapshot';
+
 const _dataMap = {
     "2016-10-07": {
         "145": {
@@ -2910,12 +2913,21 @@ const _dataMap = {
 @Injectable()
 export class PriceService {
 
-    getLastPrice(symbol) : number{
+    getLastPrice(symbol : Symbol) : number{
         return 0;
     }
 
     getOptionPrice(expiryDate : string, strikePrice : number, type : string, side : string) : number{
         return _dataMap[expiryDate][strikePrice][type][side];
+    }
+
+    getSnapshot(symbol : Symbol) : Snapshot{
+        return {
+            volume : 100,
+            open : 50,
+            liq : 5,
+            pop : 1
+        };
     }
 
     //getLastPrice(symbol) : Promise<number>{

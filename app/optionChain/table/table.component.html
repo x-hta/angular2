@@ -9,7 +9,7 @@
     <div class="OC-TABLE-M1 flip" #buyData>
         <div class="OC-TABLE">
             <div class="OC-TR" *ngFor="let expiry of expiryDates">
-                <div class="OC-TD flip" *ngFor="let strikePrice of strikePrices">
+                <div class="OC-TD flip" *ngFor="let strikePrice of strikePrices" (mouseover)="setSelectedOptionSymbol(expiry.expiryDate, strikePrice, 'buy')">
                     <div *ngIf="orderMap[expiry.expiryDate] && orderMap[expiry.expiryDate][strikePrice] && mode === 'w'">
                         <div *ngFor="let order of orderMap[expiry.expiryDate][strikePrice]['buy']">
                             <p>{{order}}</p>
@@ -54,7 +54,7 @@
     <div class="OC-TABLE-M1" #sellData>
         <div class="OC-TABLE">
             <div class="OC-TR" *ngFor="let expiry of expiryDates">
-                <div class="OC-TD" style="position: relative" *ngFor="let strikePrice of strikePrices">
+                <div class="OC-TD" style="position: relative" *ngFor="let strikePrice of strikePrices" (mouseover)="setSelectedOptionSymbol(expiry.expiryDate, strikePrice, 'sell')">
                     <div *ngIf="orderMap[expiry.expiryDate] && orderMap[expiry.expiryDate][strikePrice] && mode === 'w'">
                         <div *ngFor="let order of orderMap[expiry.expiryDate][strikePrice]['sell']">
                             <p>{{order}}</p>

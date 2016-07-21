@@ -7,18 +7,15 @@
         <th>Expirations</th>
     </tr>
     <tr>
-        <td option-chain-strategy [symbol]="symbol">Strategy</td>
+        <td option-chain-strategy [symbol]="underlyingSymbol">Strategy</td>
         <td option-chain-mode-control></td>
         <td>
             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tbody>
                 <tr>
-                    <td rowspan="2" class="GREEN-BOX" style="width: 50px;text-align: center !important;">
-                        <span>tooltip.side</span>
+                    <td rowspan="2" class="{{(side === 'buy') ? 'GREEN-BOX': 'RED-BOX'}}" style="width: 50px;text-align: center !important;">
+                        <span>{{side}}</span>
                     </td>
-                    <!--<td rowspan="2" ng-show="tooltip.side === 'SELL'" class="RED-BOX" style="width: 50px;text-align: center !important;">-->
-                    <!--<span>{{tooltip.side}}</span>-->
-                    <!--</td>-->
                     <th>Expiration</th>
                     <th>Strike</th>
                     <th>Side</th>
@@ -28,13 +25,13 @@
                     <th>POP</th>
                 </tr>
                 <tr>
-                    <td>tooltip.exp</td>
-                    <td>tooltip.stk</td>
-                    <td>tooltip.type</td>
-                    <td>tooltip.volume</td>
-                    <td>tooltip.open</td>
-                    <td>tooltip.liq <span class="icon ico-tint"></span></td>
-                    <td>tooltip.pop</td>
+                    <td>{{symbol?.expiryDate}}</td>
+                    <td>{{symbol?.strikePrice}}</td>
+                    <td>{{orderType}}</td>
+                    <td>{{snapshot?.volume}}</td>
+                    <td>{{snapshot?.open}}</td>
+                    <td>{{snapshot?.liq}}<span class="icon ico-tint"></span></td>
+                    <td>{{snapshot?.pop}}</td>
                 </tr>
                 </tbody>
             </table>
@@ -43,8 +40,8 @@
             <table width="100%" border="0" cellspacing="0" cellpadding="0">
                 <tbody>
                 <tr>
-                    <td>Time<br>-</td>
-                    <td>Time<br>+</td>
+                    <td (click)="scrollDown()">Time<br>-</td>
+                    <td (click)="scrollUp()">Time<br>+</td>
                 </tr>
                 </tbody>
             </table>

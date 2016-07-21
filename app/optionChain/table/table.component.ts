@@ -20,11 +20,14 @@ export class TableComponent implements OnInit, AfterViewInit {
     @Input() mode: string;
     @Input() orderType: string;
 
+    @Output() mouseOverEvent: EventEmitter<Object> = new EventEmitter();
+
     symbols:OptionSymbol[] = [];
     orders:OptionOrder[] = [];
 
     expiryDates:string[] = [];
     strikePrices:number[] = [];
+    symbolMap = {};
     orderMap = {};
 
     @ViewChild('buyDate') buyDateTable: ElementRef;
@@ -69,6 +72,12 @@ export class TableComponent implements OnInit, AfterViewInit {
                     console.log('TableComponent => populateData() : add expiry date');
                     self.expiryDates.push(TableComponent.getExpiryDate(symbol));
                 }
+                if(!self.symbolMap.hasOwnProperty(symbol.expiryDate)) {
+                    self.symbolMap[symbol.expiryDate] = {};
+                }
+                if(!self.symbolMap[symbol.expiryDate].hasOwnProperty(symbol.strikePrice)) {
+                    self.symbolMap[symbol.expiryDate][symbol.strikePrice] = symbol;
+                }
             });
             this.orders.forEach(function(order){
                 if(order.type === this.orderType){
@@ -89,6 +98,12 @@ export class TableComponent implements OnInit, AfterViewInit {
                 if(self.strikePrices.indexOf(symbol.strikePrice) === -1){
                     console.log('TableComponent => populateData() : add strike price');
                     self.strikePrices.push(TableComponent.getStrikePrice(symbol));
+                }
+                if(!self.symbolMap.hasOwnProperty(symbol.expiryDate)) {
+                    self.symbolMap[symbol.expiryDate] = {};
+                }
+                if(!self.symbolMap[symbol.expiryDate].hasOwnProperty(symbol.strikePrice)) {
+                    self.symbolMap[symbol.expiryDate][symbol.strikePrice] = symbol;
                 }
             });
             if(this.mode === Constants.TradeMode){
@@ -147,6 +162,11 @@ export class TableComponent implements OnInit, AfterViewInit {
 
     private getPrice(expiryDate : string, strikePrice : number, side:string) : number{
         return this.priceService.getOptionPrice(expiryDate, strikePrice, this.orderType, side);
+    }
+
+    private setSelectedOptionSymbol(expiryDate : string, strikePrice : number, side:string){
+        let symbol : OptionSymbol = this.symbolMap[expiryDate][strikePrice];
+        this.mouseOverEvent.emit({symbol : symbol, side : side});
     }
 
     private scrollLeft() : void{

@@ -4,6 +4,7 @@ import { OptionSymbolService } from './../services/opt-symbol.service';
 import { OptionTradingService } from './../services/opt-trading.service';
 
 import { OptionOrder } from './../beans/optionOrder';
+import { OptionSymbol } from './../beans/optionSymbol';
 
 import { TableComponent } from './table/table.component';
 import { PriceControlPanelComponent } from './priceControlPanel/priceControlPanel.component';
@@ -24,25 +25,31 @@ import { FooterComponent } from './footer/footer.component';
 })
 
 export class OptionChainComponent implements OnInit {
+
     symbol:string = 'SPDR S&P 500';
     mode:string = 'w';
+    type:string = 'c';
+
+    selectedOptionSymbol:OptionSymbol;
+    selectedSide:string;
+
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService) {
     }
+
     ngOnInit() {
 
     }
-    decreaseStrikePrice(){
-        let orders:OptionOrder[] = this.tradeService.getOrders(this.symbol), self = this;
-        orders.forEach(function(order){
-            //todo : decrease strike price
-            self.tradeService.updateOrder(order.id, self.symbol, order);
-        });
+
+    handleOrderControlPanelEvent(event){
+        console.log('OptionChainComponent : handleOrderControlPanelEvent() --> ' + event.msg + " : " + event.data);
     }
-    increaseStrikePrice(){
-        let orders:OptionOrder[] = this.tradeService.getOrders(this.symbol), self = this;
-        orders.forEach(function(order){
-            //todo : increase strike price
-            self.tradeService.updateOrder(order.id, self.symbol, order);
-        });
+
+    handlePriceControlPanelEvent(event){
+        console.log('OptionChainComponent : handlePriceControlPanelEvent() --> ' + event.msg + " : " + event.data);
+    }
+
+    handleTableMouseOverEvent(event){
+        this.selectedOptionSymbol = event.symbol;
+        this.selectedSide = event.side;
     }
 }
