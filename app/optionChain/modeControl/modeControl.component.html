@@ -1,7 +1,5 @@
 <div class="XWIDGET-TABS-l2">
     <ul name="type">
-        <li>Call</li>
-        <li>Put</li>
-        <li>All Trades</li>
+        <li *ngFor="let type of types" (click)="change(type.key)" class="{{type.key === selectedType ? 'current' : ''}}">{{type.label}}</li>
     </ul>
 </div>

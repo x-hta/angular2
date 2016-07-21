@@ -24,6 +24,8 @@ export class OrderControlPanelComponent {
 
     @Output() event:EventEmitter<Object> = new EventEmitter();
 
+    @Output() modeEvent:EventEmitter<Object> = new EventEmitter();
+
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService) {
     }
 
@@ -146,5 +148,9 @@ export class OrderControlPanelComponent {
             }
         });
         this.event.emit({msg : "deleteAll", data : updated});
+    }
+
+    updateModeChange(event){
+        this.modeEvent.emit(event);
     }
 }

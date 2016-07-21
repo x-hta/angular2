@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output, OnInit, OnChanges } from '@angular/core';
 import {NgClass} from '@angular/common';
 
 import {OptionSymbol} from './../../beans/optionSymbol';
@@ -24,6 +24,10 @@ export class PriceControlPanelComponent implements OnChanges{
     @Input() orderType: string;
     @Input() side: string;
 
+    @Output() event:EventEmitter<Object> = new EventEmitter();
+
+    @Output() modeEvent:EventEmitter<Object> = new EventEmitter();
+
     snapshot : Snapshot;
 
     constructor(private priceService: PriceService) {
@@ -33,14 +37,22 @@ export class PriceControlPanelComponent implements OnChanges{
         this.getSnapshot();
     }
 
-    scrollUp(){}
+    scrollUp(){
+        this.event.emit({msg : "scrollUp", data : true});
+    }
 
-    scrollDown(){}
+    scrollDown(){
+        this.event.emit({msg : "scrollUp", data : false});
+    }
 
     getSnapshot(){
         if(this.symbol){
             console.debug('PriceControlPanelComponent : getSnapshot() --> ' + this.symbol.uid);
             this.snapshot = this.priceService.getSnapshot(this.symbol);
         }
+    }
+
+    updateModeChange(event){
+        this.modeEvent.emit(event);
     }
 }

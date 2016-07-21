@@ -2,11 +2,12 @@
 
 <div class="OC-WRAPPER">
 
-    <div *ngIf="mode !== 'w'" class="OC-HEADER" option-chain-order-control-panel
-         [symbol]="symbol" [orderType]="type" (event)="handleOrderControlPanelEvent($event)"></div>
+    <div *ngIf="mode !== 'w'" class="OC-HEADER" option-chain-order-control-panel [symbol]="symbol" [orderType]="type"
+         (event)="handleOrderControlPanelEvent($event)" (modeEvent)="handleModeChange($event)"></div>
 
-    <div  *ngIf="mode === 'w'"class="OC-HEADER" option-chain-price-control-panel
-          [symbol]="selectedOptionSymbol" [side]="selectedSide" [underlyingSymbol]="symbol" [orderType]="type" (event)="handlePriceControlPanelEvent($event)"></div>
+    <div *ngIf="mode === 'w'" class="OC-HEADER" option-chain-price-control-panel
+         [symbol]="selectedOptionSymbol" [side]="selectedSide" [underlyingSymbol]="symbol" [orderType]="type"
+         (event)="handlePriceControlPanelEvent($event)" (modeEvent)="handleModeChange($event)"></div>
 
     <div option-chain-table [symbol]="symbol" [mode]="mode" [orderType]="type" (mouseOverEvent)="handleTableMouseOverEvent($event)"></div>
 </div>

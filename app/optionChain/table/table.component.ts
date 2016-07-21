@@ -148,6 +148,11 @@ export class TableComponent implements OnInit, AfterViewInit {
         }
     }
 
+    updateOrders():void{
+        this.orders = this.tradeService.getOrders(this.symbol);
+        this.populateData();
+    }
+
     private static getStrikePrice(symbol : OptionSymbol):any{
         return symbol.strikePrice;
     }
@@ -167,6 +172,14 @@ export class TableComponent implements OnInit, AfterViewInit {
     private setSelectedOptionSymbol(expiryDate : string, strikePrice : number, side:string){
         let symbol : OptionSymbol = this.symbolMap[expiryDate][strikePrice];
         this.mouseOverEvent.emit({symbol : symbol, side : side});
+    }
+
+    scrollUp() : void{
+        console.debug('TableComponent => scrollUp()');
+    }
+
+    scrollDown() : void{
+        console.debug('TableComponent => scrollDown()');
     }
 
     private scrollLeft() : void{

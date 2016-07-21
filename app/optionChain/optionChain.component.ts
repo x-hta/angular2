@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 
 import { OptionSymbolService } from './../services/opt-symbol.service';
 import { OptionTradingService } from './../services/opt-trading.service';
@@ -33,6 +33,9 @@ export class OptionChainComponent implements OnInit {
     selectedOptionSymbol:OptionSymbol;
     selectedSide:string;
 
+    @ViewChild(TableComponent)
+    private tableComponent: TableComponent;
+
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService) {
     }
 
@@ -42,10 +45,21 @@ export class OptionChainComponent implements OnInit {
 
     handleOrderControlPanelEvent(event){
         console.log('OptionChainComponent : handleOrderControlPanelEvent() --> ' + event.msg + " : " + event.data);
+        this.tableComponent.updateOrders();
     }
 
     handlePriceControlPanelEvent(event){
         console.log('OptionChainComponent : handlePriceControlPanelEvent() --> ' + event.msg + " : " + event.data);
+        if(event.data === true){
+            this.tableComponent.scrollUp();
+        }else{
+            this.tableComponent.scrollDown();
+        }
+    }
+
+    handleModeChange(event){
+        console.log('OptionChainComponent : handleModeChange() --> ' + event.msg + " : " + event.data);
+        this.type = event.data;
     }
 
     handleTableMouseOverEvent(event){
