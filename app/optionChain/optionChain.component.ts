@@ -66,4 +66,9 @@ export class OptionChainComponent implements OnInit {
         this.selectedOptionSymbol = event.symbol;
         this.selectedSide = event.side;
     }
+
+    handleStrategyClick(event){
+        console.log('OptionChainComponent : handleModeChange() --> ' + event.msg + " : " + JSON.stringify(event.data));
+        this.tableComponent.updateOrders();
+    }
 }

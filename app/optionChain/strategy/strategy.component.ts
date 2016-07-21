@@ -41,147 +41,149 @@ const STRATEGY_MAP = {
 export class StrategyComponent {
 
     @Input() symbol: string;
+    @Output() event: EventEmitter<Object> = new EventEmitter();
 
     strategies = [
         {
             name: 'Strangle',
-            def: 'long',
-            sub: {
-                long: {
+            def: 0,
+            sub: [
+                {
                     name: 'Long',
                     key: STRATEGY_MAP.longStrangle
                 },
-                short: {
+                {
                     name: 'Short',
                     key: STRATEGY_MAP.shortStrangle
                 }
-            }
+            ]
         },
         {
             name: 'Condor',
-            def: 'condor',
-            sub: {
-                condor: {
+            def: 0,
+            sub: [
+                {
                     name: 'Condor',
                     key: STRATEGY_MAP.condor
                 },
-                ironCondor: {
+                {
                     name: 'Iron',
                     key: STRATEGY_MAP.ironCondor
                 },
-                reverseIronCondor: {
+                {
                     name: 'Reverse Iron',
                     key: STRATEGY_MAP.reverseIronCondor
                 },
-                shortCondor: {
+                {
                     name: 'Short',
                     key: STRATEGY_MAP.shortCondor
                 }
-            }
+            ]
         },
         {
             name: 'Butterfly',
-            def: 'spread',
-            sub: {
-                spread: {
+            def: 0,
+            sub: [
+                {
                     name: 'Spread',
                     key: STRATEGY_MAP.butterflySpread
                 },
-                iron: {
+                {
                     name: 'Iron',
                     key: STRATEGY_MAP.ironButterfly
                 },
-                longPut: {
+                {
                     name: 'Long Put',
                     key: STRATEGY_MAP.longPutButterfly
                 },
-                shortPut: {
+                {
                     name: 'Short Put',
                     key: STRATEGY_MAP.shortPutButterfly
                 },
-                short: {
+                {
                     name: 'Short',
                     key: STRATEGY_MAP.shortButterfly
                 },
-                reverseIron: {
+                {
                     name: 'Reverse Iron',
                     key: STRATEGY_MAP.reverseIronButterfly
                 }
-            }
+            ]
         },
         {
             name: 'Ratio',
-            def: 'spread',
-            sub: {
-                spread: {
+            def: 0,
+            sub: [
+                {
                     name: 'Spread',
                     key: STRATEGY_MAP.ratioSpread
                 },
-                putSpread: {
+                {
                     name: 'Put Spread',
                     key: STRATEGY_MAP.putRatioSpread
                 },
-                putWrite: {
+                {
                     name: 'Put Write',
                     key: STRATEGY_MAP.ratioPutWrite
                 },
-                callWrite: {
+                {
                     name: 'Call Write',
                     key: STRATEGY_MAP.ratioCallWrite
                 },
-                variableWrite: {
+                {
                     name: 'Variable Write',
                     key: STRATEGY_MAP.variableRatioWrite
                 }
-            }
+            ]
         },
         {
             name: 'Straddle',
-            def: 'short',
-            sub: {
-                short: {
+            def: 0,
+            sub: [
+                {
                     name: 'Short',
                     key: STRATEGY_MAP.shortStraddle
                 }
-            }
+            ]
         },
         {
             name: 'Guts',
-            def: 'long',
-            sub: {
-                long: {
+            def: 0,
+            sub: [
+                {
                     name: 'Long',
                     key: STRATEGY_MAP.longGuts
                 },
-                short: {
+                {
                     name: 'Short',
                     key: STRATEGY_MAP.shortGuts
                 }
-            }
+            ]
         },
         {
             name: 'Ladder',
-            def: 'longCall',
-            sub: {
-                longCall: {
+            def: 0,
+            sub: [
+                {
                     name: 'Long Call',
                     key: STRATEGY_MAP.longCallLadder
                 },
-                shortCall: {
+                {
                     name: 'Short Call',
                     key: STRATEGY_MAP.shortCallLadder
                 },
-                longPut: {
+                {
                     name: 'Long Put',
                     key: STRATEGY_MAP.longPutLadder
                 },
-                shortPut: {
+                {
                     name: 'Short Put',
                     key: STRATEGY_MAP.shortPutLadder
                 }
-            }
+            ]
         }
     ];
+
     subData = [
         {
             name: 'Long',
@@ -192,6 +194,7 @@ export class StrategyComponent {
             key: STRATEGY_MAP.shortStrangle
         }
     ];
+
     show:boolean = false;
 
     @ViewChild('strategyBox') window: ElementRef;
@@ -203,23 +206,24 @@ export class StrategyComponent {
      * on click event for strategy
      * @param key
      */
-    setStrategy(key:string) : void{
-        console.log(key);
+    private setStrategy(key:string) : void{
         this.show = false;
+        let self = this;
         this.getData(key, this.symbol).then(function (data) {
-            console.log(JSON.stringify(data));
+            self.event.emit({msg : key, data : data})
         });
     }
 
     /**
      * show strategy box
      */
-    showStrategies() : void{
+    private showStrategies() : void{
         this.show = typeof this.window === 'undefined';
     }
 
-    onMouseOver(sub) : void{
-        this.subData = sub;
+    private onMouseEnter(index : number) : void{
+        //console.debug(sub);
+        this.subData = this.strategies[index].sub;
     }
 
     /**

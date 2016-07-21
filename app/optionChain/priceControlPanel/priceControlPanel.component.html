@@ -7,7 +7,7 @@
         <th>Expirations</th>
     </tr>
     <tr>
-        <td option-chain-strategy [symbol]="underlyingSymbol">Strategy</td>
+        <td option-chain-strategy (event)="updateStrategyClick($event)" [symbol]="underlyingSymbol">Strategy</td>
         <td option-chain-mode-control (event)="updateModeChange($event)"></td>
         <td>
             <table width="100%" border="0" cellspacing="0" cellpadding="0">

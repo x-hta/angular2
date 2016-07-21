@@ -80,7 +80,7 @@ export class TableComponent implements OnInit, AfterViewInit {
                 }
             });
             this.orders.forEach(function(order){
-                if(order.type === this.orderType){
+                if(order.type === self.orderType){
                     if(!self.orderMap.hasOwnProperty(order.symbol.expiryDate)){
                         self.orderMap[order.symbol.expiryDate] = {};
                     }
@@ -108,7 +108,7 @@ export class TableComponent implements OnInit, AfterViewInit {
             });
             if(this.mode === Constants.TradeMode){
                 this.orders.forEach(function(order){
-                    if(order.type === this.orderType){
+                    if(order.type === self.orderType){
                         if(expiryDateArray.indexOf(order.symbol.expiryDate) === -1){
                             expiryDateArray.push(order.symbol.expiryDate);
                             console.log('TableComponent => populateData() : add expiry date');
@@ -188,6 +188,10 @@ export class TableComponent implements OnInit, AfterViewInit {
 
     private scrollRight() : void{
         console.debug('TableComponent => scrollRight()');
+    }
+
+    private onClick():void{
+        console.debug('TableComponent => onClick()');
     }
 
 }

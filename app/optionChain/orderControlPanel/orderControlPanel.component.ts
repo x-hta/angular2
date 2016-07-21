@@ -23,8 +23,8 @@ export class OrderControlPanelComponent {
     @Input() orderType: string;
 
     @Output() event:EventEmitter<Object> = new EventEmitter();
-
     @Output() modeEvent:EventEmitter<Object> = new EventEmitter();
+    @Output() strategyEvent:EventEmitter<Object> = new EventEmitter();
 
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService) {
     }
@@ -152,5 +152,9 @@ export class OrderControlPanelComponent {
 
     updateModeChange(event){
         this.modeEvent.emit(event);
+    }
+
+    updateStrategyClick(event){
+        this.strategyEvent.emit(event);
     }
 }

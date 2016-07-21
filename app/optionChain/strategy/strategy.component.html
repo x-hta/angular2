@@ -13,10 +13,12 @@
             </div>
             <div class="OC-W320-body">
                 <ul>
-                    <li *ngFor="let strategy of strategies">
+                    <li *ngFor="let strategy of strategies; let i=index" (mouseenter)="onMouseEnter(i)">
                         <div>{{strategy.name}}<br><span class="TX-RED">{{strategy.sub[strategy.def].name}}</span></div>
                         <div><span class="icon ico-like"></span></div>
-                        <div><input type="button" value="Go" class="OC-GO" (click)="setStrategy(strategy.sub[strategy.def].key)"></div>
+                        <div>
+                            <input type="button" value="Go" class="OC-GO" (click)="setStrategy(strategy.sub[strategy.def].key)">
+                        </div>
                     </li>
                 </ul>
             </div>

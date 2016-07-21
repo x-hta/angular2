@@ -25,8 +25,8 @@ export class PriceControlPanelComponent implements OnChanges{
     @Input() side: string;
 
     @Output() event:EventEmitter<Object> = new EventEmitter();
-
     @Output() modeEvent:EventEmitter<Object> = new EventEmitter();
+    @Output() strategyEvent:EventEmitter<Object> = new EventEmitter();
 
     snapshot : Snapshot;
 
@@ -54,5 +54,9 @@ export class PriceControlPanelComponent implements OnChanges{
 
     updateModeChange(event){
         this.modeEvent.emit(event);
+    }
+
+    updateStrategyClick(event){
+        this.strategyEvent.emit(event);
     }
 }

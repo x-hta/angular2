@@ -12,7 +12,7 @@
         <th>Clear</th>
     </tr>
     <tr>
-        <td option-chain-strategy [symbol]="symbol">Strategy</td>
+        <td option-chain-strategy (event)="updateStrategyClick($event)" [symbol]="symbol">Strategy</td>
         <td option-chain-mode-control (event)="updateModeChange($event)"></td>
         <td>
             <table width="100%" border="0" cellspacing="0" cellpadding="0">
