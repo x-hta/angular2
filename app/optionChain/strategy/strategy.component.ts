@@ -4,6 +4,7 @@ import { OptionSymbolService } from './../../services/opt-symbol.service';
 import { OptionTradingService } from './../../services/opt-trading.service';
 
 import { StrategyOrderInfo } from './../../beans/strategyOrderInfo';
+import { EquitySymbol } from './../../beans/equitySymbol';
 
 const STRATEGY_MAP = {
     longStrangle: 'longStrangle',
@@ -193,8 +194,6 @@ export class StrategyComponent {
     ];
     show:boolean = false;
 
-    underlyingSymbol:Symbol;
-
     @ViewChild('strategyBox') window: ElementRef;
 
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService) {
@@ -233,7 +232,7 @@ export class StrategyComponent {
     private getData(key : string, underlyingSymbol : string) : Promise<StrategyOrderInfo>{
         let self = this;
         return this.symbolService.getOptions(underlyingSymbol).then(function (options) {
-            let sym = self.symbolService.getSymbol(underlyingSymbol);
+            let sym:EquitySymbol = self.symbolService.getBaseSymbol(underlyingSymbol);
             switch (key) {
                 case STRATEGY_MAP.longStrangle:
                     return self.tradeService.longStrangle(options, sym);

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-import { Symbol } from './../beans/symbol';
+import { OptionSymbol } from './../beans/optionSymbol';
 import { Condition } from './../beans/condition';
 
 import { OptionSymbolService } from './opt-symbol.service';
@@ -8,7 +8,7 @@ import { OptionSymbolService } from './opt-symbol.service';
 @Injectable()
 export class OptionSymbolFilterService {
 
-    filter(symbols : Symbol[], expiryCondition : Condition, strikePriceCondition : Condition) : Symbol[]{
+    filter(symbols : OptionSymbol[], expiryCondition : Condition, strikePriceCondition : Condition) : OptionSymbol[]{
         let filtered = [];
         symbols.forEach(function(value){
             if(OptionSymbolFilterService.validateExpiryDate(value, expiryCondition) && OptionSymbolFilterService.validateStrikePrice(value, strikePriceCondition)){
@@ -24,7 +24,7 @@ export class OptionSymbolFilterService {
      * @param condition
      * @returns {boolean}
      */
-    private static validateExpiryDate (option : Symbol, condition : Condition) : boolean{
+    private static validateExpiryDate (option : OptionSymbol, condition : Condition) : boolean{
         let valid = false;
         switch (condition.rule){
             case 'greater':
@@ -40,7 +40,7 @@ export class OptionSymbolFilterService {
      * @param condition
      * @returns {boolean}
      */
-    private static validateStrikePrice(option : Symbol, condition : Condition) : boolean{
+    private static validateStrikePrice(option : OptionSymbol, condition : Condition) : boolean{
         let valid = false;
         switch (condition.rule){
             case 'greater':

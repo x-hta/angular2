@@ -3,8 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { OptionSymbolService } from './../services/opt-symbol.service';
 import { OptionTradingService } from './../services/opt-trading.service';
 
-import { Symbol } from './../beans/symbol';
-import { Order } from './../beans/order';
+import { OptionOrder } from './../beans/optionOrder';
 
 import { TableComponent } from './table/table.component';
 import { PriceControlPanelComponent } from './priceControlPanel/priceControlPanel.component';
@@ -26,7 +25,6 @@ import { FooterComponent } from './footer/footer.component';
 
 export class OptionChainComponent implements OnInit {
     symbol:string = 'SPDR S&P 500';
-    symbols: Symbol[] = [];
     mode:string = 'w';
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService) {
     }
@@ -34,14 +32,14 @@ export class OptionChainComponent implements OnInit {
 
     }
     decreaseStrikePrice(){
-        let orders:Order[] = this.tradeService.getOrders(this.symbol), self = this;
+        let orders:OptionOrder[] = this.tradeService.getOrders(this.symbol), self = this;
         orders.forEach(function(order){
             //todo : decrease strike price
             self.tradeService.updateOrder(order.id, self.symbol, order);
         });
     }
     increaseStrikePrice(){
-        let orders:Order[] = this.tradeService.getOrders(this.symbol), self = this;
+        let orders:OptionOrder[] = this.tradeService.getOrders(this.symbol), self = this;
         orders.forEach(function(order){
             //todo : increase strike price
             self.tradeService.updateOrder(order.id, self.symbol, order);

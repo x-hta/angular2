@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
 
-import { Symbol }        from './../../beans/symbol';
-import { Order }        from './../../beans/order';
+import { OptionSymbol }        from './../../beans/optionSymbol';
+import { OptionOrder }        from './../../beans/optionOrder';
 
 import { Constants }        from './../../constants/constants';
 
@@ -20,8 +20,8 @@ export class TableComponent implements OnInit, AfterViewInit {
     @Input() mode: string;
     @Input() orderType: string;
 
-    symbols:Symbol[] = [];
-    orders:Order[] = [];
+    symbols:OptionSymbol[] = [];
+    orders:OptionOrder[] = [];
 
     expiryDates:string[] = [];
     strikePrices:number[] = [];
@@ -133,11 +133,11 @@ export class TableComponent implements OnInit, AfterViewInit {
         }
     }
 
-    private static getStrikePrice(symbol : Symbol):any{
+    private static getStrikePrice(symbol : OptionSymbol):any{
         return symbol.strikePrice;
     }
 
-    private static getExpiryDate(symbol : Symbol):any{
+    private static getExpiryDate(symbol : OptionSymbol):any{
         return {
             expiryDate : symbol.expiryDate,
             name: symbol.name,

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 import { OptionTradingService } from './../../services/opt-trading.service';
 
-import { Order } from './../../beans/order';
+import { OptionOrder } from './../../beans/optionOrder';
 
 import { StrategyComponent } from './../strategy/strategy.component';
 import { ModeControlComponent } from './../modeControl/modeControl.component';
@@ -20,14 +20,14 @@ export class OrderControlPanelComponent {
     constructor(private tradeService: OptionTradingService) {
     }
     decreaseStrikePrice(){
-        let orders:Order[] = this.tradeService.getOrders(this.symbol), self = this;
+        let orders:OptionOrder[] = this.tradeService.getOrders(this.symbol), self = this;
         orders.forEach(function(order){
             //todo : decrease strike price
             self.tradeService.updateOrder(order.id, self.symbol, order);
         });
     }
     increaseStrikePrice(){
-        let orders:Order[] = this.tradeService.getOrders(this.symbol), self = this;
+        let orders:OptionOrder[] = this.tradeService.getOrders(this.symbol), self = this;
         orders.forEach(function(order){
             //todo : increase strike price
             self.tradeService.updateOrder(order.id, self.symbol, order);

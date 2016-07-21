@@ -1,7 +1,10 @@
 import { Injectable }    from '@angular/core';
 
-import { Symbol } from './../beans/symbol';
+import { EquitySymbol } from './../beans/equitySymbol';
+import { OptionSymbol } from './../beans/optionSymbol';
 import { Order } from './../beans/order';
+import { OptionOrder } from './../beans/optionOrder';
+import { StockOrder } from './../beans/stockOrder';
 import { Condition } from './../beans/condition';
 import { StrategyOrderInfo } from './../beans/strategyOrderInfo';
 
@@ -13,16 +16,121 @@ import { Constants } from './../constants/constants';
 
 import 'rxjs/add/operator/toPromise';
 
+const OPTION_TYPE:string = "OPT";
+
 @Injectable()
 export class OptionTradingService {
 
     constructor(private storageService: LocalStorageService, private priceService : PriceService, private filterService : OptionSymbolFilterService) { }
 
-    private static getId(underlyingSymbol : string) : string{
-        return "optionTradeService : " + underlyingSymbol;
+    private static getId(symbol : string, type : string) : string{
+        return "optionTradeService : " +  type + "~" + symbol;
     }
 
-    private getUnderlyingSymbolPrice(symbol : Symbol) : number{
+    //region option orders
+
+    createOrderObject(symbol : OptionSymbol, type : string, subType : string, side : string, price : number, quantity : number) : OptionOrder {
+        let order:OptionOrder = {
+            id: Math.floor(Math.random() * (10000 - 500) + 500),
+            symbol: symbol,
+            type: type,
+            subType: subType,
+            side: side,
+            price: price,
+            quantity: quantity
+        };
+        let orders:OptionOrder[] = this.getOrders(symbol.underlyingSymbol);
+        if (typeof orders === 'undefined') {
+            orders = [];
+        }
+        orders.push(order);
+        this.saveOrders(symbol.underlyingSymbol, orders);
+        return order;
+    }
+
+    updateOrder(id : number, underlyingSymbol : string, newOrder : OptionOrder) : boolean{
+        let orders:OptionOrder[] = this.getOrders(underlyingSymbol), success:boolean = false, orderIndex:number, updateOrder:OptionOrder;
+        orders.forEach(function(order, index){
+            if (typeof orderIndex === 'undefined' && order.id === id) {
+                orderIndex = index;
+                updateOrder = order;
+            }
+        });
+        if (orderIndex && updateOrder) {
+            Object.assign(updateOrder, newOrder);
+            orders.splice(orderIndex, 1);
+            orders.push(updateOrder);
+            success = this.saveOrders(underlyingSymbol, orders);
+        }
+        return success;
+    }
+
+    deleteOrder(id : number, underlyingSymbol : string) : boolean{
+        let orders:OptionOrder[] = this.getOrders(underlyingSymbol), orderIndex:number, success:boolean = false;
+        orders.forEach(function(order, index){
+            if (typeof orderIndex === 'undefined' && order.id === id) {
+                orderIndex = index;
+            }
+        });
+
+        if (orderIndex) {
+            orders.splice(orderIndex, 1);
+            success = this.saveOrders(underlyingSymbol, orders);
+        } else {
+            console.warn('order obj not in order store : ' + id + " sym : " + underlyingSymbol);
+        }
+        return success;
+    }
+
+    private saveOrders(underlyingSymbol : string, orders:OptionOrder[]){
+        return this.storageService.save(OptionTradingService.getId(underlyingSymbol, OPTION_TYPE), orders);
+    }
+
+    getOrders(underlyingSymbol : string) : OptionOrder[] {
+        let orders:OptionOrder[] = this.storageService.getData(OptionTradingService.getId(underlyingSymbol, OPTION_TYPE));
+        if (typeof orders === 'undefined') {
+            orders = [];
+        }
+        return orders;
+    }
+
+    //endregion
+
+    //region stock orders
+
+    private createStockOrderObject(symbol : EquitySymbol, side : string, price : number, quantity : number) : StockOrder {
+        let order:StockOrder = {
+            id: Math.floor(Math.random() * (10000 - 500) + 500),
+            symbol: symbol,
+            side: side,
+            price: price,
+            quantity: quantity
+        };
+        let orders:StockOrder[] = this.getStockOrders(symbol);
+        if (typeof orders === 'undefined') {
+            orders = [];
+        }
+        orders.push(order);
+        this.saveStockOrders(symbol, orders);
+
+        return order;
+    }
+
+    private saveStockOrders(symbol : EquitySymbol, orders:StockOrder[]):boolean{
+        return this.storageService.save(OptionTradingService.getId(symbol.name, symbol.type), orders);
+    }
+
+    private getStockOrders(symbol : EquitySymbol) : StockOrder[] {
+        let orders:StockOrder[] = this.storageService.getData(OptionTradingService.getId(symbol.name, symbol.type));
+        if (typeof orders === 'undefined') {
+            orders = [];
+        }
+        return orders;
+    }
+
+    //endregion
+
+    private getUnderlyingSymbolPrice(symbol : EquitySymbol) : number{
         return this.priceService.getLastPrice(symbol);
     }
 
@@ -30,9 +138,9 @@ export class OptionTradingService {
         return this.priceService.getOptionPrice(expiryDate, strikePrice, type, side);
     }
 
-    private getOption(options : Symbol[], expiryCondition : Condition, strikePriceCondition : Condition) : Symbol{
-        var validOptions = this.filterService.filter(options, expiryCondition, strikePriceCondition);
-        var option;
+    private getOption(options : OptionSymbol[], expiryCondition : Condition, strikePriceCondition : Condition) : OptionSymbol{
+        let validOptions:OptionSymbol[] = this.filterService.filter(options, expiryCondition, strikePriceCondition);
+        let option : OptionSymbol;
         if (validOptions.length > 0) {
             if (validOptions.length === 1) {
                 option = validOptions[0];
@@ -59,7 +167,7 @@ export class OptionTradingService {
         return option;
     }
 
-    private static getReturnObject(strategy : string, underlyingSymbol : Symbol, orders : Order[], 
+    private static getReturnObject(strategy : string, underlyingSymbol : EquitySymbol, orders : Order[],
                                    netPremiumPaid : number, netPremiumReceived : number, maxProfit : number, maxLoss : number) : StrategyOrderInfo{
         return {
             strategy : strategy,
@@ -79,88 +187,7 @@ export class OptionTradingService {
         }
     }
 
-    static getOrderSubType(underlyingSymbolPrice : number, strikePrice : number, type : string) : string{
-        var subType;
-        if (type === Constants.CALL) {
-            if (underlyingSymbolPrice > strikePrice) {
-                subType = Constants.ITM;
-            } else if (underlyingSymbolPrice < strikePrice) {
-                subType = Constants.OTM;
-            } else {
-                subType = Constants.ATM;
-            }
-        } else {
-            if (underlyingSymbolPrice < strikePrice) {
-                subType = Constants.ITM;
-            } else if (underlyingSymbolPrice > strikePrice) {
-                subType = Constants.OTM;
-            } else {
-                subType = Constants.ATM;
-            }
-        }
-        return subType;
-    }
-
-    createOrderObject(symbol : Symbol, type : string, subType : string, side : string, price : number, quantity : number) : Order {
-        var order = {
-            id: Math.floor(Math.random() * (10000 - 500) + 500),
-            symbol: symbol,
-            type: type,
-            subType: subType,
-            side: side,
-            price: price,
-            quantity: quantity
-        };
-        var orders = this.getOrders(symbol.underlyingSymbol);
-        if (typeof orders === 'undefined') {
-            orders = [];
-        }
-        orders.push(order);
-        this.storageService.save(OptionTradingService.getId(symbol.underlyingSymbol), orders);
-        return order;
-    }
-
-    updateOrder(id : number, underlyingSymbol : string, newOrder : Order) : boolean{
-        var orders = this.getOrders(underlyingSymbol), success = false, orderIndex, updateOrder;
-        orders.forEach(function(order, index){
-            if (typeof orderIndex === 'undefined' && order.id === id) {
-                orderIndex = index;
-                updateOrder = order;
-            }
-        });
-        if (orderIndex && updateOrder) {
-            Object.assign(updateOrder, newOrder);
-            orders.splice(orderIndex, 1);
-            orders.push(updateOrder);
-            success = this.storageService.save(OptionTradingService.getId(underlyingSymbol), orders);
-        }
-        return success;
-    }
-
-    deleteOrder(id : number, underlyingSymbol : string) : boolean{
-        var orders = this.getOrders(underlyingSymbol), orderIndex, success = false;
-        orders.forEach(function(order, index){
-            if (typeof orderIndex === 'undefined' && order.id === id) {
-                orderIndex = index;
-            }
-        });
-
-        if (orderIndex) {
-            orders.splice(orderIndex, 1);
-            success = this.storageService.save(OptionTradingService.getId(underlyingSymbol), orders);
-        } else {
-            console.warn('order obj not in order store : ' + id + " sym : " + underlyingSymbol);
-        }
-        return success;
-    }
-    
-    getOrders(underlyingSymbol : string) : Order[] {
-        var orders = this.storageService.getData(OptionTradingService.getId(underlyingSymbol));
-        if (typeof orders === 'undefined') {
-            orders = [];
-        }
-        return orders;
-    }
+    //region strategy
 
     //region ladder
 
@@ -177,12 +204,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    longCallLadder(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    longCallLadder(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxProfit:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice : number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumPaid += orderPrice;
@@ -190,7 +218,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid -= orderPrice;
@@ -198,7 +226,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.CALL, Constants.ATM, Constants.SELL, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid -= orderPrice;
@@ -223,12 +251,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortCallLadder(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    shortCallLadder(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxLoss:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice : number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -236,7 +265,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -244,7 +273,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.CALL, Constants.ATM, Constants.BUY, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -269,12 +298,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    longPutLadder(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    longPutLadder(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxProfit:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumPaid += orderPrice;
@@ -282,14 +312,14 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.ITM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid -= orderPrice;
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.ATM, Constants.SELL, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid -= orderPrice;
@@ -315,11 +345,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortPutLadder(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+    shortPutLadder(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxLoss:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
+        
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -327,7 +359,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -335,7 +367,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.ATM, Constants.BUY, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -363,12 +395,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    longGuts(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    longGuts(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxLoss:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumPaid += orderPrice;
@@ -376,7 +409,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumPaid += orderPrice;
@@ -401,12 +434,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortGuts(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo {
-        var orders = [], netPremiumReceived = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    shortGuts(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo {
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxProfit:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -414,7 +448,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -443,19 +477,19 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortStraddle(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    shortStraddle(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ATM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid += orderPrice;
@@ -481,12 +515,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    ratioSpread(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    ratioSpread(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxProfit:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -494,7 +529,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -521,12 +556,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    putRatioSpread(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    putRatioSpread(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxProfit:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -534,7 +570,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.ITM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -562,14 +598,14 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    ratioCallWrite(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    ratioCallWrite(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:Order[] = [], netPremiumReceived:number = 0, expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        orders.push(this.createOrderObject(underlyingSymbol, Constants.CALL, Constants.ATM, Constants.BUY, underlyingPrice, 100));
+        orders.push(this.createStockOrderObject(underlyingSymbol, Constants.BUY, underlyingPrice, 100));
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -594,14 +630,14 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    ratioPutWrite(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    ratioPutWrite(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:Order[] = [], netPremiumReceived:number = 0, expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        orders.push(this.createOrderObject(underlyingSymbol, Constants.CALL, Constants.ATM, Constants.SELL, underlyingPrice, 100));
+        orders.push(this.createStockOrderObject(underlyingSymbol, Constants.SELL, underlyingPrice, 100));
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -627,14 +663,15 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    variableRatioWrite(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    variableRatioWrite(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:Order[] = [], netPremiumReceived:number = 0, maxProfit:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        orders.push(this.createOrderObject(underlyingSymbol, Constants.CALL, Constants.ATM, Constants.BUY, underlyingPrice, 100));
+        orders.push(this.createStockOrderObject(underlyingSymbol, Constants.BUY, underlyingPrice, 100));
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.SELL);
             maxProfit += order2Symbol.strikePrice;
@@ -642,7 +679,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.CALL, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -671,19 +708,20 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: number, maxProfit: number, maxLoss: number, orders: Array}}
      * @private
      */
-    butterflySpread(options : Symbol[], underlyingSymbol : Symbol) :StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    butterflySpread(options : OptionSymbol[], underlyingSymbol : EquitySymbol) :StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxProfit:number = 0, 
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.SELL);
             orders.push(this.createOrderObject(order2Symbol, Constants.CALL, Constants.ATM, Constants.SELL, orderPrice, 1));
@@ -693,7 +731,7 @@ export class OptionTradingService {
             maxProfit += orderPrice;
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.BUY);
             orders.push(this.createOrderObject(order4Symbol, Constants.CALL, Constants.OTM, Constants.BUY, orderPrice, 1));
@@ -720,26 +758,27 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    ironButterfly(options : Symbol[], underlyingSymbol : Symbol) :StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    ironButterfly(options : OptionSymbol[], underlyingSymbol : EquitySymbol) :StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxLoss:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumReceived -= orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.OTM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumReceived += orderPrice;
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.ATM, Constants.SELL, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -747,7 +786,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order3Symbol, Constants.CALL, Constants.ATM, Constants.SELL, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -773,19 +812,20 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    longPutButterfly(options : Symbol[], underlyingSymbol : Symbol) :StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    longPutButterfly(options : OptionSymbol[], underlyingSymbol : EquitySymbol) :StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxProfit:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.OTM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid -= orderPrice;
@@ -795,7 +835,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.ATM, Constants.SELL, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumPaid += orderPrice;
@@ -821,12 +861,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortPutButterfly(options : Symbol[], underlyingSymbol : Symbol) :StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    shortPutButterfly(options : OptionSymbol[], underlyingSymbol : EquitySymbol) :StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxLoss:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumReceived -= orderPrice;
@@ -834,7 +875,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumReceived += orderPrice;
@@ -844,7 +885,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.ATM, Constants.BUY, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumReceived -= orderPrice;
@@ -869,12 +910,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortButterfly(options : Symbol[], underlyingSymbol : Symbol) :StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    shortButterfly(options : OptionSymbol[], underlyingSymbol : EquitySymbol) :StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxLoss:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -882,7 +924,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -892,7 +934,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.CALL, Constants.ATM, Constants.BUY, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -917,26 +959,27 @@ export class OptionTradingService {
      * @param underlyingSymbol
      * @private
      */
-    reverseIronButterfly(options : Symbol[], underlyingSymbol : Symbol) :StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    reverseIronButterfly(options : OptionSymbol[], underlyingSymbol : EquitySymbol) :StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxProfit:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid -= orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.OTM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.ATM, Constants.BUY, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice, false));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumPaid += orderPrice;
@@ -944,7 +987,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order3Symbol, Constants.CALL, Constants.ATM, Constants.BUY, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid -= orderPrice;
@@ -975,26 +1018,27 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    condor(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    condor(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxProfit:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid -= orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.BUY);
             orders.push(this.createOrderObject(order2Symbol, Constants.CALL, Constants.ITM, Constants.BUY, orderPrice, 1));
             netPremiumPaid += orderPrice;
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.SELL);
             orders.push(this.createOrderObject(order3Symbol, Constants.CALL, Constants.OTM, Constants.SELL, orderPrice, 1));
@@ -1002,7 +1046,7 @@ export class OptionTradingService {
             maxProfit += orderPrice;
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.BUY);
             orders.push(this.createOrderObject(order4Symbol, Constants.CALL, Constants.OTM, Constants.BUY, orderPrice, 1));
@@ -1029,26 +1073,27 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    ironCondor(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    ironCondor(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxLoss:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.OTM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumPaid -= orderPrice;
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.OTM, Constants.BUY, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid += orderPrice;
@@ -1056,7 +1101,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order3Symbol, Constants.CALL, Constants.OTM, Constants.SELL, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumPaid -= orderPrice;
@@ -1083,26 +1128,27 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    reverseIronCondor(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, maxProfit = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    reverseIronCondor(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid:number = 0, maxProfit:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.PUT, Constants.BUY);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.PUT, Constants.OTM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid -= orderPrice;
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.OTM, Constants.SELL, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumPaid += orderPrice;
@@ -1110,7 +1156,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order3Symbol, Constants.CALL, Constants.OTM, Constants.BUY, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid -= orderPrice;
@@ -1137,12 +1183,13 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortCondor(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumReceived = 0, maxLoss = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    shortCondor(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumReceived:number = 0, maxLoss:number = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumReceived -= orderPrice;
@@ -1150,7 +1197,7 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.ITM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.97, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived -= orderPrice;
@@ -1158,14 +1205,14 @@ export class OptionTradingService {
             orders.push(this.createOrderObject(order2Symbol, Constants.CALL, Constants.ITM, Constants.SELL, orderPrice, 1));
         }
 
-        var order3Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order3Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order3Symbol) {
             orderPrice = this.getOptionPrice(order3Symbol.expiryDate, order3Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumReceived -= orderPrice;
             orders.push(this.createOrderObject(order3Symbol, Constants.CALL, Constants.OTM, Constants.BUY, orderPrice, 1));
         }
 
-        var order4Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
+        let order4Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.03, true));
         if (order4Symbol) {
             orderPrice = this.getOptionPrice(order4Symbol.expiryDate, order4Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumReceived += orderPrice;
@@ -1193,18 +1240,20 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    longStrangle(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+    longStrangle(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid = 0,
+            expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
+
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.BUY);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.OTM, Constants.BUY, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.BUY);
             orders.push(this.createOrderObject(order2Symbol, Constants.PUT, Constants.OTM, Constants.BUY, orderPrice, 1));
@@ -1226,19 +1275,19 @@ export class OptionTradingService {
      * @returns {{netPremiumPaid: *, maxProfit: *, maxLoss: *, orders: *}}
      * @private
      */
-    shortStrangle(options : Symbol[], underlyingSymbol : Symbol) : StrategyOrderInfo{
-        var orders = [], netPremiumPaid = 0, expiryCondition = OptionTradingService.getCondition(15, true), orderPrice;
+    shortStrangle(options : OptionSymbol[], underlyingSymbol : EquitySymbol) : StrategyOrderInfo{
+        let orders:OptionOrder[] = [], netPremiumPaid = 0, expiryCondition:Condition = OptionTradingService.getCondition(15, true), orderPrice:number;
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var order1Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
+        let order1Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 1.02, true));
         if (order1Symbol) {
             orderPrice = this.getOptionPrice(order1Symbol.expiryDate, order1Symbol.strikePrice, Constants.CALL, Constants.SELL);
             netPremiumPaid += orderPrice;
             orders.push(this.createOrderObject(order1Symbol, Constants.CALL, Constants.OTM, Constants.SELL, orderPrice, 1));
         }
 
-        var order2Symbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
+        let order2Symbol:OptionSymbol = this.getOption(options, expiryCondition, OptionTradingService.getCondition(underlyingPrice * 0.98, false));
         if (order2Symbol) {
             orderPrice = this.getOptionPrice(order2Symbol.expiryDate, order2Symbol.strikePrice, Constants.PUT, Constants.SELL);
             netPremiumPaid += orderPrice;
@@ -1250,6 +1299,30 @@ export class OptionTradingService {
 
     //endregion
 
+    //endregion
+
+    static getOrderSubType(underlyingSymbolPrice : number, strikePrice : number, type : string) : string{
+        let subType : string;
+        if (type === Constants.CALL) {
+            if (underlyingSymbolPrice > strikePrice) {
+                subType = Constants.ITM;
+            } else if (underlyingSymbolPrice < strikePrice) {
+                subType = Constants.OTM;
+            } else {
+                subType = Constants.ATM;
+            }
+        } else {
+            if (underlyingSymbolPrice < strikePrice) {
+                subType = Constants.ITM;
+            } else if (underlyingSymbolPrice > strikePrice) {
+                subType = Constants.OTM;
+            } else {
+                subType = Constants.ATM;
+            }
+        }
+        return subType;
+    }
+
     /**
      * intrinsic = Strike Price - Underlying Stock Price
      * extrinsic = Option Price - Intrinsic Value
@@ -1258,8 +1331,8 @@ export class OptionTradingService {
      * @param underlyingSymbol
      * @private {{intrinsic:*, extrinsic:*, ivRank:*, theta:*, delta:*, price:*}}
      */
-    orderInfo(orders, underlyingSymbol : Symbol) {
-        var orderInfo = {
+    orderInfo(orders, underlyingSymbol : EquitySymbol){
+        let orderInfo = {
             intrinsic: 0,
             extrinsic: 0,
             ivRank: "34",
@@ -1271,21 +1344,21 @@ export class OptionTradingService {
             absPrice : 0
         };
 
-        var underlyingPrice = this.getUnderlyingSymbolPrice(underlyingSymbol);
+        let underlyingPrice:number = this.getUnderlyingSymbolPrice(underlyingSymbol);
 
-        var totIntrinsic = 0;
-        var totExtrinsic = 0;
-        var totPrice = 0;
+        let totIntrinsic:number = 0;
+        let totExtrinsic:number = 0;
+        let totPrice:number = 0;
 
         orders.forEach(function (value) {
             if (value.length > 0) {
                 value.forEach(function (val) {
-                    var qty = val.quantity;
-                    var typ = val.side;
-                    var strkPrice = val.symbol.strikePrice;
-                    var intrinsic = strkPrice - underlyingPrice;
-                    var extrinsic = val.price - intrinsic;
-                    var price = ((typ == 'buy') ? (1) : (-1)) * val.price;
+                    let qty:number = val.quantity;
+                    let typ:string = val.side;
+                    let strkPrice:number = val.symbol.strikePrice;
+                    let intrinsic:number = strkPrice - underlyingPrice;
+                    let extrinsic:number = val.price - intrinsic;
+                    let price:number = ((typ === 'buy') ? (1) : (-1)) * val.price;
 
                     totIntrinsic += qty * intrinsic;
                     totExtrinsic += qty * extrinsic;

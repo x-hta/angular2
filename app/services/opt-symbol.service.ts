@@ -1,6 +1,8 @@
 import { Injectable }    from '@angular/core';
 
 import { Symbol } from './../beans/symbol';
+import { EquitySymbol } from './../beans/equitySymbol';
+import { OptionSymbol } from './../beans/optionSymbol';
 
 import { LocalStorageService } from './local-storage.service';
 
@@ -14,7 +16,7 @@ export class OptionSymbolService {
 
     constructor(private storageService: LocalStorageService) { }
 
-    private static generateOptionSymbols(underlyingSymbol : String) : Symbol[]{
+    private static generateOptionSymbols(underlyingSymbol : String) : OptionSymbol[]{
         let symbols = [], today = new Date(), i, j;//price = this.priceService.getLastPrice(underlyingSymbol),
         let dateInWeek = today.getDay();
         if (dateInWeek > 5) {
@@ -33,6 +35,7 @@ export class OptionSymbolService {
                 n = monthNames[d.getMonth()] + ' ' + (date < 10 ? ('0' + date) : date) + "'" + year.toString().substring(2);
             for (j = start; j < end; j += 5) {
                 symbols.push({
+                    type : 'OPT',
                     name: n,
                     underlyingSymbol: underlyingSymbol,
                     expiryDate: e,
@@ -55,7 +58,7 @@ export class OptionSymbolService {
      * @param symbol
      * @returns {number}
      */
-    static getDateDifferenceInDays(symbol : Symbol) : number{
+    static getDateDifferenceInDays(symbol : OptionSymbol) : number{
         let a = new Date(), b = new Date(symbol.expiryDate);
         let utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
         let utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
@@ -63,8 +66,8 @@ export class OptionSymbolService {
         return Math.floor((utc2 - utc1) / MS_PER_DAY);
     }
 
-    getOptions(underlyingSymbol : string) : Promise<Symbol[]>{
-        var self = this;
+    getOptions(underlyingSymbol : string) : Promise<OptionSymbol[]>{
+        let self = this;
         return new Promise(function(resolve) {
             let id = OptionSymbolService.getId();
             let symbols = self.storageService.getData(id);
@@ -78,13 +81,11 @@ export class OptionSymbolService {
         });
     }
 
-    getSymbol(symbol : string) : Symbol{
-        return <Symbol>{
+    getBaseSymbol(symbol : string) : EquitySymbol{
+        return <EquitySymbol>{
+            type: 'EQU',
             uid: symbol,
-            name: symbol,
-            underlyingSymbol: symbol,
-            expiryDate: '',
-            strikePrice: 0
+            name: symbol
         }
     }
 
