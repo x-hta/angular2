@@ -12,7 +12,7 @@ import {Constants} from './../../constants/constants';
 export class ModeControlComponent implements OnInit{
 
     types = [];
-    selectedType:string;
+    selectedType:string = Constants.CALL;
 
     @Output() event:EventEmitter<Object> = new EventEmitter();
 
@@ -20,11 +20,11 @@ export class ModeControlComponent implements OnInit{
         this.types.push({key : Constants.CALL, label : 'Call'});
         this.types.push({key : Constants.PUT, label : 'Put'});
         this.types.push({key : Constants.ANY, label : 'All Trades'});
-        this.change(Constants.CALL);
     }
 
     change(key:string){
         this.selectedType = key;
+        console.log('ModeControlComponent : change -> ' + key);
         this.event.emit({msg : "ModeClick", data : key});
     }
 }

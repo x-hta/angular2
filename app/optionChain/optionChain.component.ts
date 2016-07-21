@@ -3,6 +3,8 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { OptionSymbolService } from './../services/opt-symbol.service';
 import { OptionTradingService } from './../services/opt-trading.service';
 
+import { Constants } from './../constants/constants';
+
 import { OptionOrder } from './../beans/optionOrder';
 import { OptionSymbol } from './../beans/optionSymbol';
 
@@ -27,8 +29,8 @@ import { FooterComponent } from './footer/footer.component';
 export class OptionChainComponent implements OnInit {
 
     symbol:string = 'SPDR S&P 500';
-    mode:string = 'w';
-    type:string = 'c';
+    mode:string = Constants.WatchListMode;
+    type:string = Constants.CALL;
 
     selectedOptionSymbol:OptionSymbol;
     selectedSide:string;
@@ -68,7 +70,9 @@ export class OptionChainComponent implements OnInit {
     }
 
     handleStrategyClick(event){
-        console.log('OptionChainComponent : handleModeChange() --> ' + event.msg + " : " + JSON.stringify(event.data));
+        console.log('OptionChainComponent : handleStrategyClick() --> ' + event.msg + " : " + JSON.stringify(event.data));
+        this.mode = Constants.TradeMode;
+        this.type = Constants.ANY;
         this.tableComponent.updateOrders();
     }
 }

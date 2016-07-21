@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, AfterViewInit, ElementRef, ViewChild, OnChanges } from '@angular/core';
 
 import { OptionSymbol }        from './../../beans/optionSymbol';
 import { OptionOrder }        from './../../beans/optionOrder';
@@ -14,7 +14,7 @@ import { PriceService } from './../../services/price.service';
     templateUrl: 'app/optionChain/table/table.component.html'
 })
 
-export class TableComponent implements OnInit, AfterViewInit {
+export class TableComponent implements AfterViewInit, OnChanges {
 
     @Input() symbol: string;
     @Input() mode: string;
@@ -25,10 +25,10 @@ export class TableComponent implements OnInit, AfterViewInit {
     symbols:OptionSymbol[] = [];
     orders:OptionOrder[] = [];
 
-    expiryDates:string[] = [];
-    strikePrices:number[] = [];
-    symbolMap = {};
-    orderMap = {};
+    expiryDates:string[];
+    strikePrices:number[];
+    symbolMap;
+    orderMap;
 
     @ViewChild('buyDate') buyDateTable: ElementRef;
     @ViewChild('buyData') buyDataTable: ElementRef;
@@ -41,13 +41,18 @@ export class TableComponent implements OnInit, AfterViewInit {
     constructor(private symbolService: OptionSymbolService, private tradeService: OptionTradingService, private priceService: PriceService) {
     }
 
-    ngOnInit() {
+    ngOnChanges(changes) {
+        console.debug(changes);
+        this.expiryDates = [];
+        this.strikePrices = [];
+        this.symbolMap = {};
+        this.orderMap = {};
         this.orders = this.tradeService.getOrders(this.symbol);
         this.symbolService.getOptions(this.symbol).then(symbols => this.symbols = symbols).then(() => this.populateData());
     }
 
     ngAfterViewInit() {
-        let tableHeight = 263.5;
+        let tableHeight = 263.5;//todo : get height
         //var tableHeight = (parentContainer.height() - parentContainer.find('div.OC-HEADER').height() - midPriceTable.height()) / 2;
 
         this.buyDateTable.nativeElement.style.height = tableHeight;
@@ -58,7 +63,8 @@ export class TableComponent implements OnInit, AfterViewInit {
         this.sellDatePercentageTable.nativeElement.style.height = tableHeight;
     }
 
-    private populateData(): void{
+    //todo : refactor
+    populateData(): void{
         console.log('TableComponent => populateData()');
         let self = this, expiryDateArray:string[] = [];
         if(this.mode === Constants.WatchListMode){
@@ -108,7 +114,7 @@ export class TableComponent implements OnInit, AfterViewInit {
             });
             if(this.mode === Constants.TradeMode){
                 this.orders.forEach(function(order){
-                    if(order.type === self.orderType){
+                    if(Constants.ANY === self.orderType ||  order.type === self.orderType){
                         if(expiryDateArray.indexOf(order.symbol.expiryDate) === -1){
                             expiryDateArray.push(order.symbol.expiryDate);
                             console.log('TableComponent => populateData() : add expiry date');
@@ -166,7 +172,11 @@ export class TableComponent implements OnInit, AfterViewInit {
     }
 
     private getPrice(expiryDate : string, strikePrice : number, side:string) : number{
-        return this.priceService.getOptionPrice(expiryDate, strikePrice, this.orderType, side);
+        let type:string = this.orderType;
+        if(type === Constants.ANY){
+            type = Constants.CALL;
+        }
+        return this.priceService.getOptionPrice(expiryDate, strikePrice, type, side);
     }
 
     private setSelectedOptionSymbol(expiryDate : string, strikePrice : number, side:string){
@@ -176,21 +186,45 @@ export class TableComponent implements OnInit, AfterViewInit {
 
     scrollUp() : void{
         console.debug('TableComponent => scrollUp()');
+        var height = 25;//todo : get height of cell
+        this.buyDateTable.nativeElement.scrollTop -= height;
+        this.buyDataTable.nativeElement.scrollTop -= height;
+        this.buyDatePercentageTable.nativeElement.scrollTop -= height;
+        this.sellDateTable.nativeElement.scrollTop -= height;
+        this.sellDataTable.nativeElement.scrollTop -= height;
+        this.sellDatePercentageTable.nativeElement.scrollTop -= height;
     }
 
     scrollDown() : void{
         console.debug('TableComponent => scrollDown()');
+        var height = 25;//todo : get height of cell
+        this.buyDateTable.nativeElement.scrollTop += height;
+        this.buyDataTable.nativeElement.scrollTop += height;
+        this.buyDatePercentageTable.nativeElement.scrollTop += height;
+        this.sellDateTable.nativeElement.scrollTop += height;
+        this.sellDataTable.nativeElement.scrollTop += height;
+        this.sellDatePercentageTable.nativeElement.scrollTop += height;
     }
 
     private scrollLeft() : void{
         console.debug('TableComponent => scrollLeft()');
+        var width = 72;//todo : get width of cell
+        this.buyDataTable.nativeElement.scrollLeft -= width;
+        this.midPriceTable.nativeElement.scrollLeft -= width;
+        this.sellDataTable.nativeElement.scrollLeft -= width;
     }
 
     private scrollRight() : void{
         console.debug('TableComponent => scrollRight()');
+        var width = 72;//todo : get width of cell
+        this.buyDataTable.nativeElement.scrollLeft += width;
+        this.midPriceTable.nativeElement.scrollLeft += width;
+        this.sellDataTable.nativeElement.scrollLeft += width;
+
     }
 
     private onClick():void{
+        //todo : create order in watch list
         console.debug('TableComponent => onClick()');
     }
 
