@@ -19,7 +19,7 @@ import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
 
 @Component({
-    selector: 'option-chain',
+    selector: '[option-chain]',
     templateUrl: 'app/optionChain/optionChain.component.html',
     styleUrls : ['app/optionChain/optionChain.component.css'],
     directives: [TableComponent, PriceControlPanelComponent, OrderWindowComponent, OrderInformationComponent,

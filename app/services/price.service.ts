@@ -2918,7 +2918,16 @@ export class PriceService {
     }
 
     getOptionPrice(expiryDate : string, strikePrice : number, type : string, side : string) : number{
-        return _dataMap[expiryDate][strikePrice][type][side];
+        if(_dataMap.hasOwnProperty(expiryDate)){
+            if(_dataMap[expiryDate].hasOwnProperty(strikePrice)){
+                return _dataMap[expiryDate][strikePrice][type][side];
+            }else{
+                console.log(strikePrice);
+            }
+        }else{
+            console.log(expiryDate);
+        }
+        return 0;
     }
 
     getSnapshot(symbol : Symbol) : Snapshot{

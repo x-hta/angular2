@@ -1,0 +1,24 @@
+<div class="XWIDGET">
+    <div class="XWIDGET-HEADER box-header grid-stack-item-title">
+        <span>{{widgetHeader}}</span>
+
+        <div class="OPTIONS">
+            <ul rel='widgetControls'>
+                <li rel="c" *ngIf="enableClose"><span (click)="close()" class="icon ico-close"></span></li>
+                <li rel="s" *ngIf="enableSettings"><span (click)="openSettings()" class="icon ico-wrench"></span></li>
+                <li rel="l" widget-link="#l"><!--data-w-channel="{{widgetChannel}}" data-w-id="{{widgetId}}"-->
+                    <span class="icon ico-link wSelectedLinkCls" rel="selectedChannel"></span>
+                    <ul class="XWIDGET-ACTIONS link">
+                        <li class='XMAGENTA' rel="r"></li>
+                        <li class='XPRPL' rel="b"></li>
+                        <li class='XAQUA' rel="g"></li>
+                        <li class='XYELLOW' rel="y"></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div *ngIf="enableSettings" widget-settings></div>
+    <div class="XWIDGET-CONTENT" #dynamicContentPlaceHolder>
+    </div>
+</div>

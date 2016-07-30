@@ -7,7 +7,7 @@ import { OptionSymbolFilterService } from './services/opt-symbol-filter.service'
 import { PriceService } from './services/price.service';
 import { OptionTradingService } from './services/opt-trading.service';
 
-import { OptionChainComponent } from './optionChain/optionChain.component';
+import { WidgetComponent } from './widget/widget.component';
 
 @Component({
     selector: 'my-app',
@@ -26,7 +26,7 @@ import { OptionChainComponent } from './optionChain/optionChain.component';
     {
         path: '/optionChain',
         name: 'OptionChain',
-        component: OptionChainComponent,
+        component: WidgetComponent,
         useAsDefault: true
     }
 ])
