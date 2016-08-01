@@ -1,16 +1,16 @@
 <div style="position: absolute;">
-    <div class="{{::getOrderSideClass(data.side)}}" ng-dblclick="onDoubleClick($event)" ng-mousedown="onMouseDown($event)" option-chain-element-draggable>
+    <div class="{{getOrderSideClass(data.side)}}" ng-dblclick="onDoubleClick($event)" ng-mousedown="onMouseDown($event)" option-chain-element-draggable>
         <div class="OC-FLAG-BODY">
             <div class="OC-FLAG-CONTENT">
                 <div class="OC-FLAG-TOP">
-                    <span class="FLOAT-L" style="text-transform: uppercase">{{::data.side}}</span>
-                    <span class="FLOAT-R">{{::data.type}}</span>
+                    <span class="FLOAT-L" style="text-transform: uppercase">{{data.side}}</span>
+                    <span class="FLOAT-R">{{data.type}}</span>
                 </div>
                 <div class="ALIGN-CENTER PADDING5 OC-FLAG-TEXT">
-                    <span class="FONT18">{{::data.quantity}}</span>
+                    <span class="FONT18">{{data.quantity}}</span>
                     <span>{{order.symbol.strikePrice}}</span>
-                    <span>{{::data.expiry}}</span>
-                    <span>@{{::data.price}}</span>
+                    <span>{{data.expiry}}</span>
+                    <span>@{{data.price}}</span>
                     <span> DB </span>
                 </div>
             </div>

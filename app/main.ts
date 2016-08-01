@@ -8,10 +8,12 @@ import { InMemoryDataService }               from './services/in-memory-data.ser
 import { bootstrap }      from '@angular/platform-browser-dynamic';
 import { HTTP_PROVIDERS } from '@angular/http';
 
+import { appRouterProviders } from './app.routes';
+
 import { AppComponent }   from './app.component';
 
 bootstrap(AppComponent, [
-    HTTP_PROVIDERS,
+    appRouterProviders, HTTP_PROVIDERS,
     { provide: XHRBackend, useClass: InMemoryBackendService }, // in-mem server
     { provide: SEED_DATA, useClass: InMemoryDataService }      // in-mem server data
 ]);

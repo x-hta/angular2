@@ -2,30 +2,39 @@ import {Component, OnInit, ViewChild, ViewContainerRef, ComponentResolver, Compo
 
 import {WidgetInterface} from './widget.interface';
 import {WidgetBuilder} from './widget.builder';
-import {WidgetSettingsComponent} from './settings/widget.settings.component';
+//import {WidgetSettingsComponent} from './settings/widget.settings.component';
 
 @Component({
-    selector : 'widget',
+    selector : '[widget]',
     templateUrl : 'app/widget/widget.component.html',
     styleUrls : ['app/widget/widget.component.css'],
-    providers : [WidgetBuilder],
-    directives : [WidgetSettingsComponent]
+    providers : [WidgetBuilder]
 })
 export class WidgetComponent implements OnInit{
-    widgetHeader : string = 'Option Trader';
-    enableClose : boolean = true;
-    enableSettings : boolean = true;
-    widgetChannel : string = 'g';
-    widgetId : string = '123';
 
-    //@Input()
-    widgetType : string = 'optionChain';
+    @Input()
+    widgetHeader : string;
+
+    @Input()
+    enableClose : boolean;
+
+    @Input()
+    enableSettings : boolean;
+
+    @Input()
+    widgetChannel : string;
+
+    @Input()
+    widgetId : string;
+
+    @Input()
+    widgetType;
 
     @ViewChild('dynamicContentPlaceHolder', {read: ViewContainerRef})
     protected dynamicComponentTarget: ViewContainerRef;
 
-    @ViewChild(WidgetSettingsComponent)
-    private settingsComponent: WidgetSettingsComponent;
+    //@ViewChild(WidgetSettingsComponent)
+    //private settingsComponent: WidgetSettingsComponent;
 
     constructor(protected componentResolver: ComponentResolver, protected widgetBuilder: WidgetBuilder){
 
@@ -54,7 +63,6 @@ export class WidgetComponent implements OnInit{
 
     private openSettings() : void{
         console.log('WidgetComponent : openSettings()');
-        this.settingsComponent.open();
     }
 
 }
